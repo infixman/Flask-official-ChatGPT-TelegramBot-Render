@@ -58,8 +58,8 @@ async def webhook_handler(request: Request):
 
 
 def reply_handler(bot, update):
-    chat_id = update.message.chat.id
-    user_id = update.message.from_user.id
+    chat_id = str(update.message.chat.id)
+    user_id = str(update.message.from_user.id)
     is_need_ask = False
     ask_message = str(update.message.text).strip()
 
