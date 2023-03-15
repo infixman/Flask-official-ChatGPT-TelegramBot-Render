@@ -1,3 +1,4 @@
+import json
 import logging
 import openai
 import os
@@ -52,9 +53,11 @@ class ChatGPT:
 def webhook_handler():
     """Set route /hook with POST method will trigger this method."""
     if request.method == "POST":
-        update = telegram.Update.de_json(request.get_json(force=True), TG_BOT)
+        callback_body = request.get_json(force=True)
+        print(f"callback_body: {json.dumps(callback_body)}")
+        logger.info(f"callback_body= {json.dumps(callback_body)}")
 
-        # Update dispatcher process that handler to process this message
+        update = telegram.Update.de_json(callback_body, TG_BOT)
         DISPATCHER.process_update(update)
     return 'ok'
 
