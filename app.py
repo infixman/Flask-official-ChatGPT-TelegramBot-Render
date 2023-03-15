@@ -3,25 +3,27 @@ import logging
 import openai
 import os
 import telegram
-from flask import Flask, request
+from fastapi import FastAPI, Request
 from telegram.ext import Dispatcher, MessageHandler, Filters
 
-CHAT_LANGUAGE = os.getenv("INIT_LANGUAGE", default = "zh")
-TELEGRAM_BOT_TOKEN = str(os.getenv("TELEGRAM_BOT_TOKEN"))
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TG_BOT = telegram.Bot(token=TELEGRAM_BOT_TOKEN)
 DISPATCHER = Dispatcher(TG_BOT, None)
-CONVERSATIONS = {}
-LOG_LEVEL = os.getenv("LOG_LEVEL", default = "DEBUG")
-app = Flask(__name__)
+LOG_LEVEL = os.getenv("LOG_LEVEL", default="INFO")
+
+app = FastAPI()
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=LOG_LEVEL)
 logger = logging.getLogger(__name__)
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
+
+
+CONVERSATIONS = {}
 
 class ChatGPT:
     def __init__(self, session_id: str):
-        self.model = os.getenv("OPENAI_MODEL", default = "gpt-3.5-turbo")
+        self.model = os.getenv("OPENAI_MODEL", default="gpt-3.5-turbo")
         self.session_id = session_id
 
     def get_response(self, user_input):
@@ -40,33 +42,31 @@ class ChatGPT:
         user_messages.append({"role": "assistant", "content": chatGPT_anserwer})
         CONVERSATIONS[self.session_id] = user_messages
         
-        logger.info(f"""tg user: {self.session_id})
-👨‍💼:{user_input}
+        logger.info(f"""
+Session: {self.session_id}
+👨‍:{user_input}
 🤖:{chatGPT_anserwer}""")
 
         return chatGPT_anserwer
 
 
-@app.route('/callback', methods=['POST'])
-def webhook_handler():
-    """Set route /hook with POST method will trigger this method."""
-    if request.method == "POST":
-        callback_body = request.get_json(force=True)
-        logger.info(f"callback_body: {json.dumps(callback_body)}")
-        update = telegram.Update.de_json(callback_body, TG_BOT)
-        DISPATCHER.process_update(update)
-    return 'ok'
+@app.post("/callback")
+async def webhook_handler(request: Request):
+    data = await request.json()
+    logger.info(f"request data: {json.dumps(data)}")
+    update = telegram.Update.de_json(data, TG_BOT)
+    DISPATCHER.process_update(update)
+    return "ok"
 
 
 def reply_handler(bot, update):
-    """Reply message."""
-    logger.info(f"update.message: {json.dumps(update.message)}")
-    session_id = f"{update.message.chat.id}"
+    session_id = f"{update.message.chat.id}-{update.message.from_user.id}"
     chatgpt = ChatGPT(session_id)
     chatGPT_anserwer = chatgpt.get_response(update.message.text)
     update.message.reply_text(chatGPT_anserwer)
 
+DISPATCHER.add_handler(MessageHandler(Filters.text, reply_handler))
+
 if __name__ == "__main__":
-    DISPATCHER.add_handler(MessageHandler(Filters.text, reply_handler))
     app.run(debug=True)
 
