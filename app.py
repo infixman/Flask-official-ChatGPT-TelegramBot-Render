@@ -65,9 +65,9 @@ def reply_handler(bot, update):
 
     if chat_id == user_id:
         is_need_ask = True
-    elif ask_message.lower().startswith("ai?") and len(ask_message) > 3:
+    elif ask_message.upper().startswith("Q:") and len(ask_message) > 2:
         is_need_ask = True
-        ask_message = ask_message[3:]
+        ask_message = ask_message[3:].strip()
 
     if is_need_ask:
         chatgpt = ChatGPT(chat_id)
