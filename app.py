@@ -36,16 +36,16 @@ class ChatGPT:
             user=self.session_id,
         )
 
-        chatGPT_anserwer = response['choices'][0]['message']['content'].strip()
-        user_messages.append({"role": "assistant", "content": chatGPT_anserwer})
+        chatgpt_anserwer = response['choices'][0]['message']['content'].strip()
+        user_messages.append({"role": "assistant", "content": chatgpt_anserwer})
         CONVERSATIONS[self.session_id] = user_messages
         
         logger.info(f"""
 Session: {self.session_id}
 👨‍:{user_input}
-🤖:{chatGPT_anserwer}""")
+🤖:{chatgpt_anserwer}""")
 
-        return chatGPT_anserwer
+        return chatgpt_anserwer
 
 
 @app.post("/callback")
@@ -58,10 +58,22 @@ async def webhook_handler(request: Request):
 
 
 def reply_handler(bot, update):
-    session_id = f"{update.message.chat.id}-{update.message.from_user.id}"
-    chatgpt = ChatGPT(session_id)
-    chatGPT_anserwer = chatgpt.get_response(update.message.text)
-    update.message.reply_text(chatGPT_anserwer)
+    chat_id = update.message.chat.id
+    user_id = update.message.from_user.id
+    is_need_ask = False
+    ask_message = str(update.message.text).strip()
+
+    if chat_id == user_id:
+        is_need_ask = True
+    elif ask_message.lower().startswith("ai?") and len(ask_message) > 3:
+        is_need_ask = True
+        ask_message = ask_message[3:]
+
+    if is_need_ask:
+        chatgpt = ChatGPT(chat_id)
+        chatgpt_anserwer = chatgpt.get_response(ask_message)
+        update.message.reply_text(chatgpt_anserwer)
+
 
 DISPATCHER.add_handler(MessageHandler(Filters.text, reply_handler))
 
