@@ -10,18 +10,19 @@ TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TG_BOT = telegram.Bot(token=TELEGRAM_BOT_TOKEN)
 DISPATCHER = Dispatcher(TG_BOT, None)
 LOG_LEVEL = os.getenv("LOG_LEVEL", default="INFO")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", default="gpt-3.5-turbo")
+OPENAI_MAX_TOKENS = int(os.getenv("OPENAI_MAX_TOKENS", default=10))
 
 app = FastAPI()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=LOG_LEVEL)
+logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=LOG_LEVEL)
 logger = logging.getLogger(__name__)
 
 CONVERSATIONS = {}
 
 class ChatGPT:
     def __init__(self, session_id: str):
-        self.model = os.getenv("OPENAI_MODEL", default="gpt-3.5-turbo")
         self.session_id = session_id
 
     def get_response(self, user_input):
@@ -31,12 +32,13 @@ class ChatGPT:
 
         user_messages.append({"role": "user", "content": user_input})
         response = openai.ChatCompletion.create(
-            model=self.model,
-            messages = user_messages,
+            model=OPENAI_MODEL,
+            messages=user_messages,
             user=self.session_id,
+            max_tokens=OPENAI_MAX_TOKENS,
         )
 
-        chatgpt_anserwer = response['choices'][0]['message']['content'].strip()
+        chatgpt_anserwer = response["choices"][0]["message"]["content"].strip()
         user_messages.append({"role": "assistant", "content": chatgpt_anserwer})
         CONVERSATIONS[self.session_id] = user_messages
         
