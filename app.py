@@ -34,11 +34,15 @@ class ChatGPT:
             user=str(self.tg_user_id),
         )
 
-        chatgpt_anserwer = response['choices'][0]['message']['content'].strip()
-        user_messages.append({"role": "assistant", "content": chatgpt_anserwer})
+        chatGPT_anserwer = response['choices'][0]['message']['content'].strip()
+        user_messages.append({"role": "assistant", "content": chatGPT_anserwer})
         CONVERSATIONS[self.tg_user_id] = user_messages
-        logger.info(f"{chatgpt_anserwer}")
-        return chatgpt_anserwer
+        
+        logger.info(f"""tg user: {self.tg_user_id})
+👨‍💼:{user_input}
+🤖:{chatGPT_anserwer}""")
+        
+        return chatGPT_anserwer
 
 
 @app.route('/callback', methods=['POST'])
