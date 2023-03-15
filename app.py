@@ -20,31 +20,29 @@ logger = logging.getLogger(__name__)
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 class ChatGPT:
-    def __init__(self, tg_user_id: str):
+    def __init__(self, session_id: str):
         self.model = os.getenv("OPENAI_MODEL", default = "gpt-3.5-turbo")
-        self.tg_user_id = tg_user_id
+        self.session_id = session_id
 
     def get_response(self, user_input):
         user_messages = []
-        if self.tg_user_id in CONVERSATIONS:
-            user_messages = CONVERSATIONS.get(self.tg_user_id)
+        if self.session_id in CONVERSATIONS:
+            user_messages = CONVERSATIONS.get(self.session_id)
 
         user_messages.append({"role": "user", "content": user_input})
         response = openai.ChatCompletion.create(
             model=self.model,
             messages = user_messages,
-            user=str(self.tg_user_id),
+            user=self.session_id,
         )
 
         chatGPT_anserwer = response['choices'][0]['message']['content'].strip()
         user_messages.append({"role": "assistant", "content": chatGPT_anserwer})
-        CONVERSATIONS[self.tg_user_id] = user_messages
+        CONVERSATIONS[self.session_id] = user_messages
         
-        log_msg = f"""tg user: {self.tg_user_id})
+        logger.info(f"""tg user: {self.session_id})
 👨‍💼:{user_input}
-🤖:{chatGPT_anserwer}"""
-        print(log_msg)
-        logger.info(log_msg)
+🤖:{chatGPT_anserwer}""")
 
         return chatGPT_anserwer
 
@@ -54,9 +52,7 @@ def webhook_handler():
     """Set route /hook with POST method will trigger this method."""
     if request.method == "POST":
         callback_body = request.get_json(force=True)
-        print(f"callback_body: {json.dumps(callback_body)}")
-        logger.info(f"callback_body= {json.dumps(callback_body)}")
-
+        logger.info(f"callback_body: {json.dumps(callback_body)}")
         update = telegram.Update.de_json(callback_body, TG_BOT)
         DISPATCHER.process_update(update)
     return 'ok'
@@ -64,11 +60,10 @@ def webhook_handler():
 
 def reply_handler(bot, update):
     """Reply message."""
-    user_id = str(update.message.from_user.id)
-    print(f"user_id: {user_id}, message: {update.message.text}")
-    chatgpt = ChatGPT(user_id)
+    logger.info(f"update.message: {json.dumps(update.message)}")
+    session_id = f"{update.message.chat.id}"
+    chatgpt = ChatGPT(session_id)
     chatGPT_anserwer = chatgpt.get_response(update.message.text)
-    print(f"user_id: {user_id}, message: {update.message.text}, chatGPT: {chatGPT_anserwer}")
     update.message.reply_text(chatGPT_anserwer)
 
 if __name__ == "__main__":
