@@ -17,8 +17,6 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=LOG_LEVEL)
 logger = logging.getLogger(__name__)
 
-
-
 CONVERSATIONS = {}
 
 class ChatGPT:
