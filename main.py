@@ -7,7 +7,7 @@ from fastapi import FastAPI, Request
 from telegram import Update
 from telegram.ext import Dispatcher, Filters, MessageHandler
 
-import app.chatbot
+import app.chatbot as chatbot
 from app.chatgpt import ChatGPT
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
@@ -48,7 +48,7 @@ def text_message_handler(bot, update: Update):
         chatgpt_anserwer = chatgpt.get_response(user_message)
         update.message.reply_text(chatgpt_anserwer)
     else:
-        chatbot = chatbot.reply(update)
+        chatbot.reply(update)
 
 
 DISPATCHER.add_handler(MessageHandler(Filters.text, text_message_handler))

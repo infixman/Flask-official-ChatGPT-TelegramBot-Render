@@ -5,7 +5,7 @@ import openai
 from openai.error import InvalidRequestError
 
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", default="gpt-3.5-turbo")
-OPENAI_MAX_TOKENS = int(os.getenv("OPENAI_MAX_TOKENS", default=10))
+OPENAI_MAX_TOKENS = int(os.getenv("OPENAI_MAX_TOKENS", default=250))
 LOG_LEVEL = os.getenv("LOG_LEVEL", default="INFO")
 
 CONVERSATIONS = {}

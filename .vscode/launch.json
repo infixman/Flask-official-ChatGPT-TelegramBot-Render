@@ -7,12 +7,18 @@
             "request": "launch",
             "module": "uvicorn",
             "args": [
-                "app:app",
+                "main:app",
                 "--port",
                 "8080",
                 "--host",
                 "0.0.0.0"
             ],
+            "env": {
+                "LOG_LEVEL": "DEBUG",
+                "TELEGRAM_BOT_TOKEN": "12345xxx:xxx",
+                "OPENAI_API_KEY": "xxxx",
+                "OPENAI_MAX_TOKENS": "250"
+            },
             "justMyCode": false,
         }
     ]
