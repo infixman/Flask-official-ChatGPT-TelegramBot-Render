@@ -41,7 +41,7 @@ Session: {self.session_id}
 👨‍:{user_input}
 🤖:{chatgpt_anserwer}""")
         except InvalidRequestError:
-            user_messages = []
+            CONVERSATIONS[self.session_id] = []
             chatgpt_anserwer = "腦容量不足，已清除對話紀錄，請重新詢問。"
         
         return chatgpt_anserwer
