@@ -30,7 +30,7 @@ async def webhook_handler(request: Request):
     return "ok"
 
 
-def text_message_handler(update: Update):
+def text_message_handler(_, update: Update):
     chat_id = str(update.message.chat.id)
     user_id = str(update.message.from_user.id)
     user_message = str(update.message.text).strip()
@@ -51,7 +51,7 @@ def text_message_handler(update: Update):
     else:
         chatbot.reply(update)
 
-def command_u_handler(update: Update):
+def command_u_handler(_, update: Update):
     update.message.reply_text(f"{util.get_usdt()}\n\n{util.get_usd_rate()}")
 
 DISPATCHER.add_handler(MessageHandler(filters=Filters.text, callback=text_message_handler))
