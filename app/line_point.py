@@ -261,7 +261,7 @@ async def get_answer(rate=MINIMUM_EARNING_RATE_REQUIREMENT, days=SHORT_MONEY_LOC
     results = cursor.execute(
         """
         SELECT * FROM gifts
-        WHERE earning_rate <= :rate AND money_lock_days < :days
+        WHERE earning_rate <= :rate AND 1 <= money_lock_days AND money_lock_days < :days
         ORDER BY money_lock_days DESC, earning_rate ASC
         LIMIT 10;
         """,
