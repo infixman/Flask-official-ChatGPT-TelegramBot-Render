@@ -51,6 +51,7 @@ def text_message_handler(_, update: Update):
     else:
         chatbot.reply(update)
 
+
 def command_u_handler(_, update: Update):
     update.message.reply_text(f"{util.get_usdt()}\n\n{util.get_usd_rate()}")
 
@@ -65,6 +66,6 @@ async def command_lp_handler(_, update: Update):
 
     update.message.reply_text(answer, parse_mode=ParseMode.MARKDOWN)
 
-DISPATCHER.add_handler(MessageHandler(filters=filters.Text, callback=text_message_handler))
-DISPATCHER.add_handler(CommandHandler(command="u", callback=command_u_handler))
-DISPATCHER.add_handler(CommandHandler(command="lp", callback=command_lp_handler, run_async=True))
+UPDATER.dispatcher.add_handler(MessageHandler(filters=filters.Text, callback=text_message_handler))
+UPDATER.dispatcher.add_handler(CommandHandler(command="u", callback=command_u_handler))
+UPDATER.dispatcher.add_handler(CommandHandler(command="lp", callback=command_lp_handler, run_async=True))
