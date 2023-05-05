@@ -3,7 +3,7 @@ import logging
 import os
 
 from fastapi import FastAPI, Request
-from telegram import Update
+from telegram import Bot, Update
 from telegram.constants import ParseMode
 from telegram.ext import CommandHandler, MessageHandler, Updater, filters
 
@@ -13,7 +13,8 @@ import app.util as util
 from app.chatgpt import ChatGPT
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-UPDATER = Updater(token=TELEGRAM_BOT_TOKEN, use_context=True)
+TG_BOT = Bot(token=TELEGRAM_BOT_TOKEN)
+UPDATER = Updater(bot=TG_BOT, use_context=True)
 LOG_LEVEL = os.getenv("LOG_LEVEL", default="INFO")
 
 app = FastAPI()
