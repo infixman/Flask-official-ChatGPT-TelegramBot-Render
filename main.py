@@ -1,9 +1,7 @@
 import asyncio
-import json
 import logging
 import os
 
-from fastapi import FastAPI, Request
 from telegram import Update
 from telegram.constants import ParseMode
 from telegram.ext import Application, CommandHandler, MessageHandler, filters
@@ -17,19 +15,8 @@ TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 APPLICATION = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 LOG_LEVEL = os.getenv("LOG_LEVEL", default="INFO")
 
-app = FastAPI()
-
 logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=LOG_LEVEL)
 logger = logging.getLogger(__name__)
-
-@app.post("/callback")
-async def webhook_handler(request: Request):
-    request_body = await request.json()
-    logger.info(f"request_body: {json.dumps(request_body)}")
-    update = Update.de_json(request_body, APPLICATION.bot)
-    APPLICATION.process_update(update)
-    return "ok"
-
 
 def text_message_handler(_, update: Update):
     chat_id = str(update.message.chat.id)
@@ -67,6 +54,8 @@ def command_lp_handler(_, update: Update):
 
     update.message.reply_text(answer, parse_mode=ParseMode.MARKDOWN)
 
-APPLICATION.add_handler(MessageHandler(filters=filters.Text, callback=text_message_handler))
-APPLICATION.add_handler(CommandHandler(command="u", callback=command_u_handler))
-APPLICATION.add_handler(CommandHandler(command="lp", callback=command_lp_handler))
+if __name__ == "__main__":
+    APPLICATION.add_handler(MessageHandler(filters=filters.Text, callback=text_message_handler))
+    APPLICATION.add_handler(CommandHandler(command="u", callback=command_u_handler))
+    APPLICATION.add_handler(CommandHandler(command="lp", callback=command_lp_handler))
+    APPLICATION.run_polling()
