@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import os
@@ -56,16 +57,16 @@ def command_u_handler(_, update: Update):
     update.message.reply_text(f"{util.get_usdt()}\n\n{util.get_usd_rate()}")
 
 
-async def command_lp_handler(_, update: Update):
+def command_lp_handler(_, update: Update):
     answer = ""
     paras = update.message.text.upper().split(" ")
     if len(paras) == 3:
-        answer = await line_point.get_answer(paras[1], paras[2])
+        answer = asyncio.run(line_point.get_answer(paras[1], paras[2]))
     else:
-        answer = await line_point.get_answer()
+        answer = asyncio.run(line_point.get_answer())
 
     update.message.reply_text(answer, parse_mode=ParseMode.MARKDOWN)
 
 APPLICATION.add_handler(MessageHandler(filters=filters.Text, callback=text_message_handler))
 APPLICATION.add_handler(CommandHandler(command="u", callback=command_u_handler))
-APPLICATION.add_handler(CommandHandler(command="lp", callback=command_lp_handler, run_async=True))
+APPLICATION.add_handler(CommandHandler(command="lp", callback=command_lp_handler))
