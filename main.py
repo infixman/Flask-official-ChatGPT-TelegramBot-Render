@@ -3,9 +3,9 @@ import logging
 import os
 
 from fastapi import FastAPI, Request
-from telegram import Bot, Update
+from telegram import Update
 from telegram.constants import ParseMode
-from telegram.ext import CommandHandler, MessageHandler, Updater, filters
+from telegram.ext import Application, CommandHandler, MessageHandler, filters
 
 import app.chatbot as chatbot
 import app.line_point as line_point
@@ -13,8 +13,7 @@ import app.util as util
 from app.chatgpt import ChatGPT
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-TG_BOT = Bot(token=TELEGRAM_BOT_TOKEN)
-UPDATER = Updater(bot=TG_BOT, update_queue=None)
+APPLICATION = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 LOG_LEVEL = os.getenv("LOG_LEVEL", default="INFO")
 
 app = FastAPI()
@@ -26,8 +25,8 @@ logger = logging.getLogger(__name__)
 async def webhook_handler(request: Request):
     request_body = await request.json()
     logger.info(f"request_body: {json.dumps(request_body)}")
-    update = Update.de_json(request_body, UPDATER.bot)
-    UPDATER.dispatcher.process_update(update)
+    update = Update.de_json(request_body, APPLICATION.bot)
+    APPLICATION.process_update(update)
     return "ok"
 
 
@@ -67,6 +66,6 @@ async def command_lp_handler(_, update: Update):
 
     update.message.reply_text(answer, parse_mode=ParseMode.MARKDOWN)
 
-UPDATER.dispatcher.add_handler(MessageHandler(filters=filters.Text, callback=text_message_handler))
-UPDATER.dispatcher.add_handler(CommandHandler(command="u", callback=command_u_handler))
-UPDATER.dispatcher.add_handler(CommandHandler(command="lp", callback=command_lp_handler, run_async=True))
+APPLICATION.add_handler(MessageHandler(filters=filters.Text, callback=text_message_handler))
+APPLICATION.add_handler(CommandHandler(command="u", callback=command_u_handler))
+APPLICATION.add_handler(CommandHandler(command="lp", callback=command_lp_handler, run_async=True))
