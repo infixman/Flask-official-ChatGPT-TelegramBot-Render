@@ -14,7 +14,7 @@ from app.chatgpt import ChatGPT
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TG_BOT = Bot(token=TELEGRAM_BOT_TOKEN)
-UPDATER = Updater(bot=TG_BOT)
+UPDATER = Updater(bot=TG_BOT, update_queue=None)
 LOG_LEVEL = os.getenv("LOG_LEVEL", default="INFO")
 
 app = FastAPI()
