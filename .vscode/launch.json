@@ -2,16 +2,12 @@
     "version": "0.0.1",
     "configurations": [
         {
-            "name": "Fast Test",
+            "name": "moneyBrokerr_bot",
             "type": "python",
             "request": "launch",
-            "module": "uvicorn",
+            "module": "python3",
             "args": [
-                "main:app",
-                "--port",
-                "8080",
-                "--host",
-                "0.0.0.0"
+                "main.py"
             ],
             "env": {
                 "LOG_LEVEL": "DEBUG",
