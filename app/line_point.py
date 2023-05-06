@@ -147,28 +147,31 @@ async def fetch_gift(session, gift_id):
 
 async def crawl_line_gifts(conn, cursor):
     global LAST_QUERY_TIME
+    global LAST_QUERY_TIME_LOCK
+    
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS gifts (
+            id INTEGER PRIMARY KEY,
+            name TEXT NOT NULL,
+            description TEXT,
+            price INTEGER,
+            earning_rate REAL,
+            money_lock_days INTEGER,
+            gift_ended_time TEXT,
+            gift_expiration_time TEXT,
+            period_days INTEGER,
+            period_type TEXT,
+            max_point_earning REAL,
+            earning_delay_days INTEGER
+        )
+        """
+    )
+    
     with LAST_QUERY_TIME_LOCK:
         now = datetime.now()
         # cache for 1 hour
         if LAST_QUERY_TIME is None or (now - LAST_QUERY_TIME).total_seconds() > 3600:
-            cursor.execute(
-                """
-                CREATE TABLE IF NOT EXISTS gifts (
-                    id INTEGER PRIMARY KEY,
-                    name TEXT NOT NULL,
-                    description TEXT,
-                    price INTEGER,
-                    earning_rate REAL,
-                    money_lock_days INTEGER,
-                    gift_ended_time TEXT,
-                    gift_expiration_time TEXT,
-                    period_days INTEGER,
-                    period_type TEXT,
-                    max_point_earning REAL,
-                    earning_delay_days INTEGER
-                )
-                """
-            )
             
             async with aiohttp.ClientSession() as session:
                 category_ids = await list_category_ids(session)
