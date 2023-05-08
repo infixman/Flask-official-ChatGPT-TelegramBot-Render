@@ -52,9 +52,9 @@ def command_lp_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     answer = ""
     paras = update.message.text.upper().split(" ")
     if len(paras) == 3:
-        answer = asyncio.run(line_point.get_answer(paras[1], paras[2]))
+        answer = asyncio.get_running_loop().run_in_executor(line_point.get_answer(paras[1], paras[2]))
     else:
-        answer = asyncio.run(line_point.get_answer())
+        answer = asyncio.get_running_loop().run_in_executor(line_point.get_answer())
 
     update.message.reply_text(answer, parse_mode=ParseMode.MARKDOWN)
 
