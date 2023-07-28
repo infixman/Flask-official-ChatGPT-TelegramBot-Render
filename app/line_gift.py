@@ -113,7 +113,7 @@ async def list_category_gift_ids(session, category_id, target_rate, page=1, resu
             content = data["result"]["content"]
             for gift in content:
                 if gift["pointEarningPolicy"] is not None:
-                    if gift["pointEarningPolicy"]["earningRate"] >= target_rate:
+                    if float(gift["pointEarningPolicy"]["earningRate"]) >= target_rate:
                         results.append(gift["id"])
 
             if not data["result"]["last"]:
