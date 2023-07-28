@@ -1,7 +1,7 @@
 import logging
 import os
 
-from telegram import ChatPermissions, Update
+from telegram import ChatPermissions, Message, Update
 from telegram.constants import ParseMode
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
 
@@ -55,9 +55,10 @@ async def chat_member_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
 
 async def command_lp_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     paras = update.message.text.upper().split(" ")
+    reply_msg: Message = await update.message.reply_text("loading ...")
     if len(paras) == 2:
         msg = await line_gift.crawl_line_gifts(int(paras[1]))
-        await update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN)
+        await context.bot.edit_message_text(chat_id=reply_msg.chat_id, message_id=reply_msg.message_id, text=msg)
 
 
 async def telegram_error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
