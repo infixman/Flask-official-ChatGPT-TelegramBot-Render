@@ -25,7 +25,7 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
     user_name = str(update.message.from_user.name)
     user_full_name = str(update.message.from_user.full_name)
     user_message = str(update.message.text).strip()
-    logger.debug(
+    logger.info(
         f"[NEW MESSAGE] chat_id:{chat_id}, chat_name:{chat_name}, user_id:{user_id}, user_name:{user_name}, user_full_name:{user_full_name}, user_message:{user_message}"
     )
     await chatbot.reply(update)
@@ -56,11 +56,11 @@ async def chat_member_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
             await context.bot.restrict_chat_member(chat.id, user.id, permissions=ChatPermissions())
             await context.bot.ban_chat_member(chat_id=chat.id, user_id=user.id)
 
-            logger.debug(
+            logger.info(
                 f"[BAN MEMBER] chat_id:{chat_id}, chat_name:{chat_name}, user_id:{user_id}, user_name:{user_name}, user_full_name:{user_full_name}"
             )
         else:
-            logger.debug(
+            logger.info(
                 f"[NEW MEMBER] chat_id:{chat_id}, chat_name:{chat_name}, user_id:{user_id}, user_name:{user_name}, user_full_name:{user_full_name}"
             )
 
@@ -79,7 +79,7 @@ async def telegram_error_handler(update: Update, context: ContextTypes.DEFAULT_T
 
 
 def main():
-    logger.debug("[TG BOT START]")
+    logger.info("[TG BOT START]")
     APPLICATION.add_handler(MessageHandler(filters=filters.TEXT & ~filters.COMMAND, callback=text_message_handler))
     APPLICATION.add_handler(MessageHandler(filters=filters.StatusUpdate.NEW_CHAT_MEMBERS, callback=chat_member_handler))
     APPLICATION.add_handler(CommandHandler(command="lp", callback=command_lp_handler))

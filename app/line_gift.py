@@ -1,4 +1,6 @@
 import asyncio
+import logging
+import os
 from datetime import datetime
 from typing import Optional
 
@@ -7,11 +9,15 @@ import pytz
 from cachetools import TTLCache
 from telegram.constants import ParseMode
 
+LOG_LEVEL = os.getenv("LOG_LEVEL", default="INFO")
 TIMEZONE_TAIWAN = pytz.timezone("Asia/Taipei")
 MINIMUM_EARNING_RATE_REQUIREMENT = 5.0
 SHORT_MONEY_LOCK_DAYS = 50
 
 CACHE = TTLCache(maxsize=100, ttl=21600)  # 21600 = 6 hours
+
+logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=LOG_LEVEL)
+logger = logging.getLogger(__name__)
 
 
 class Gift:
@@ -95,7 +101,7 @@ async def list_category_ids(session):
             data = dict(await response.json())
             return [dict(category).get("categoryId") for category in data.get("result", {}).get("voucherCategories", [])]
         else:
-            print(f"無法取得 categorire")
+            logger.info(f"無法取得 categorire")
             return []
 
 
@@ -143,7 +149,7 @@ async def crawl_line_gifts(target_rate: float, bot, reply_msg) -> str:
         async with aiohttp.ClientSession() as session:
             category_ids = await list_category_ids(session)
             msg = f"取得 {len(category_ids)} 個 category"
-            print(msg)
+            logger.info(msg)
             await bot.edit_message_text(
                 chat_id=reply_msg.chat_id, message_id=reply_msg.message_id, text=msg, parse_mode=ParseMode.MARKDOWN
             )
@@ -156,7 +162,7 @@ async def crawl_line_gifts(target_rate: float, bot, reply_msg) -> str:
                     try:
                         category_gift_ids = await list_category_gift_ids(session, category_id)
                         tmp_msg = f"{category_index}. category {category_id} 取得 {len(category_gift_ids)} 個 gift"
-                        print(tmp_msg)
+                        logger.info(tmp_msg)
                         msg = f"{msg}\n{tmp_msg}"
                         await bot.edit_message_text(
                             chat_id=reply_msg.chat_id, message_id=reply_msg.message_id, text=msg, parse_mode=ParseMode.MARKDOWN
@@ -206,7 +212,7 @@ async def crawl_line_gifts(target_rate: float, bot, reply_msg) -> str:
             result_text = f"快取時間: {utc_plus_8_now}\n---\n查無結果"
 
         CACHE[target_rate] = result_text
-        
+
         await bot.edit_message_text(
             chat_id=reply_msg.chat_id, message_id=reply_msg.message_id, text=result_text, parse_mode=ParseMode.MARKDOWN
         )
