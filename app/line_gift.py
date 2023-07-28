@@ -141,9 +141,11 @@ async def fetch_gift(session, gift_id):
     return None
 
 
-async def crawl_line_gifts(target_rate: float, bot, reply_msg) -> str:
+async def crawl_line_gifts(target_rate: float, bot, reply_msg):
     if target_rate in CACHE:
-        return CACHE[target_rate]
+        await bot.edit_message_text(
+            chat_id=reply_msg.chat_id, message_id=reply_msg.message_id, text=CACHE[target_rate], parse_mode=ParseMode.MARKDOWN
+        )
     else:
         tmp_result = {}
         async with aiohttp.ClientSession() as session:
