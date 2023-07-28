@@ -5,6 +5,7 @@ from typing import Optional
 import aiohttp
 import pytz
 from cachetools import TTLCache
+from telegram.constants import ParseMode
 
 TIMEZONE_TAIWAN = pytz.timezone("Asia/Taipei")
 MINIMUM_EARNING_RATE_REQUIREMENT = 5.0
@@ -134,59 +135,75 @@ async def fetch_gift(session, gift_id):
     return None
 
 
-async def crawl_line_gifts(target_rate: int) -> str:
+async def crawl_line_gifts(target_rate: float, bot, reply_msg) -> str:
     if target_rate in CACHE:
         return CACHE[target_rate]
+    else:
+        tmp_result = []
+        async with aiohttp.ClientSession() as session:
+            category_ids = await list_category_ids(session)
+            msg = f"取得 {len(category_ids)} 個 category"
+            print(msg)
+            await bot.edit_message_text(
+                chat_id=reply_msg.chat_id, message_id=reply_msg.message_id, text=msg, parse_mode=ParseMode.MARKDOWN
+            )
+            category_index = 0
 
-    utc_now = datetime.utcnow()
-    time_format = "%Y-%m-%d %H:%M:%S"
-    utc_plus_8_now = utc_now.replace(tzinfo=pytz.utc).astimezone(TIMEZONE_TAIWAN).strftime(time_format)
-    tmp = [f"快取時間: {utc_plus_8_now}"]
+            for category_id in category_ids:
+                retry_count = 0
+                category_index += 1
+                while retry_count < 3:
+                    try:
+                        category_gift_ids = await list_category_gift_ids(session, category_id)
+                        tmp_msg = f"{category_index}. category {category_id} 取得 {len(category_gift_ids)} 個 gift"
+                        print(tmp_msg)
+                        msg = f"{msg}\n{tmp_msg}"
+                        await bot.edit_message_text(
+                            chat_id=reply_msg.chat_id, message_id=reply_msg.message_id, text=msg, parse_mode=ParseMode.MARKDOWN
+                        )
+                        break
+                    except:
+                        retry_count += 1
+                        await asyncio.sleep(0.05)
 
-    async with aiohttp.ClientSession() as session:
-        category_ids = await list_category_ids(session)
-        print(f"取得 {len(category_ids)} 個 category")
+                tasks = []
+                for category_gift_id in category_gift_ids:
+                    task = asyncio.create_task(fetch_gift(session, category_gift_id))
+                    tasks.append(task)
 
-        for category_id in category_ids:
-            retry_count = 0
-            while retry_count < 3:
-                try:
-                    category_gift_ids = await list_category_gift_ids(session, category_id)
-                    print(f"category {category_id} 取得 {len(category_gift_ids)} 個 gift")
-                    break
-                except:
-                    retry_count += 1
-                    await asyncio.sleep(0.05)
+                responses = await asyncio.gather(*tasks)
+                for response in responses:
+                    gift = Gift.from_dict(response.get("result"))
 
-            tasks = []
-            for category_gift_id in category_gift_ids:
-                task = asyncio.create_task(fetch_gift(session, category_gift_id))
-                tasks.append(task)
+                    if (
+                        gift.period_type == "FIXED"
+                        and gift.money_lock_days < SHORT_MONEY_LOCK_DAYS
+                        and target_rate <= gift.earning_rate
+                    ):
+                        gift_description = f"{gift.earning_rate}%, ${gift.price}, 銷售至 {gift.gift_ended_time}, "
 
-            responses = await asyncio.gather(*tasks)
-            for response in responses:
-                gift = Gift.from_dict(response.get("result"))
+                        if gift.period_days:
+                            gift_description = f"{gift_description}可兌換至銷售後 {gift.period_days} 天\n"
+                        elif gift.gift_expiration_time:
+                            gift_description = f"{gift_description}可兌換至 {gift.gift_expiration_time}\n"
 
-                if (
-                    gift.period_type == "FIXED"
-                    and gift.money_lock_days < SHORT_MONEY_LOCK_DAYS
-                    and target_rate <= gift.earning_rate
-                ):
-                    gift_description = f"{gift.earning_rate}%, ${gift.price}, 銷售至 {gift.gift_ended_time}, "
+                        gift_description = (
+                            f"{gift_description}最後一天買的話，錢錢被卡 {gift.money_lock_days} 天, {gift.earning_delay_days}天後給點\n"
+                            f"{gift.name}\n"
+                            f"https://giftshop-tw.line.me/voucher/{gift.id}"
+                        )
 
-                    if gift.period_days:
-                        gift_description = f"{gift_description}可兌換至銷售後 {gift.period_days} 天\n"
-                    elif gift.gift_expiration_time:
-                        gift_description = f"{gift_description}可兌換至 {gift.gift_expiration_time}\n"
+                        tmp_result.append(gift_description)
 
-                    gift_description = (
-                        f"{gift_description}最後一天買的話，錢錢被卡 {gift.money_lock_days} 天, {gift.earning_delay_days}天後給點\n"
-                        f"{gift.name}\n"
-                        f"https://giftshop-tw.line.me/voucher/{gift.id}"
-                    )
+        utc_now = datetime.utcnow()
+        time_format = "%Y-%m-%d %H:%M:%S"
+        utc_plus_8_now = utc_now.replace(tzinfo=pytz.utc).astimezone(TIMEZONE_TAIWAN).strftime(time_format)
 
-                    tmp.append(gift_description)
+        if tmp_result:
+            tmp_result.insert(0, f"快取時間: {utc_plus_8_now}")
+        else:
+            tmp_result = [f"快取時間: {utc_plus_8_now}", "查無結果"]
 
-    result = "\n---\n".join(tmp)
-    CACHE[target_rate] = result
-    return result
+        result = "\n---\n".join(tmp_result)
+        CACHE[target_rate] = result
+        return result
