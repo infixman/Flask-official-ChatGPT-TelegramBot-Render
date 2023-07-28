@@ -20,14 +20,15 @@ TEXT_STICKER_MAPPING = {
 
 STICKER_WOBUZHIDAO = "CAACAgUAAxkBAAEBLBFgd_tZGLLQLj5O7kuE-r7chp_LOAAC_wEAAmmSQVVx1ECQ0wcNAh8E"
 
-def reply(update: Update):
+
+async def reply(update: Update):
     if update.message:
         msg: Message = update.message
         if msg.text:
             txt = str(msg.text).strip()
             if txt in TEXT_STICKER_MAPPING:
                 sticker_id = random.choice(TEXT_STICKER_MAPPING[txt])
-                msg.reply_sticker(sticker_id)
+                await msg.reply_sticker(sticker_id)
             elif (txt.endswith("=?") or txt.endswith("=$?") or txt.endswith("=$")) and (
                 "+" in txt or "-" in txt or "*" in txt or "/" in txt or "^" in txt
             ):
@@ -36,8 +37,8 @@ def reply(update: Update):
                     if txt.endswith("=$?") or txt.endswith("=$"):
                         locale.setlocale(locale.LC_ALL, "en_US.utf8")
                         result = locale.format_string("%.2f", eval(fomula), grouping=True)
-                        msg.reply_text(f"={result}")
+                        await msg.reply_text(f"={result}")
                     else:
-                        msg.reply_text(f"={eval(fomula)}")
+                        await msg.reply_text(f"={eval(fomula)}")
                 except:
-                    msg.reply_sticker(STICKER_WOBUZHIDAO)
+                    await msg.reply_sticker(STICKER_WOBUZHIDAO)
