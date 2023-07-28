@@ -1,17 +1,21 @@
 import asyncio
 import logging
 import os
+from uuid import uuid4
 
 from telegram import ChatPermissions, Message, Update
-from telegram.constants import ParseMode
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
 
 from app import chatbot, line_gift
 
 LOG_LEVEL = os.getenv("LOG_LEVEL", default="INFO")
-
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+WEBHOOK_URL = os.getenv("WEBHOOK_URL")
+WEBHOOK_PORT = int(os.getenv("WEBHOOK_PORT"))
 logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=LOG_LEVEL)
 logger = logging.getLogger(__name__)
+
+APPLICATION = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 
 
 async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -56,10 +60,10 @@ async def chat_member_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
 
 async def command_lp_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     paras = update.message.text.upper().split(" ")
-    reply_msg: Message = await update.message.reply_text("loading ...")
     if len(paras) == 2:
         target_rate = float(paras[1])
         if target_rate >= 1:
+            reply_msg: Message = await update.message.reply_text("loading ...")
             asyncio.create_task(line_gift.crawl_line_gifts(target_rate, context.bot, reply_msg))
 
 
@@ -68,14 +72,22 @@ async def telegram_error_handler(update: Update, context: ContextTypes.DEFAULT_T
 
 
 def main():
-    telegram_bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
-    application = Application.builder().token(telegram_bot_token).build()
+    logger.debug("[TG BOT START]")
+    APPLICATION.add_handler(MessageHandler(filters=filters.TEXT & ~filters.COMMAND, callback=text_message_handler))
+    APPLICATION.add_handler(MessageHandler(filters=filters.StatusUpdate.NEW_CHAT_MEMBERS, callback=chat_member_handler))
+    APPLICATION.add_handler(CommandHandler(command="lp", callback=command_lp_handler))
+    APPLICATION.add_error_handler(telegram_error_handler)
 
-    application.add_handler(MessageHandler(filters=filters.TEXT & ~filters.COMMAND, callback=text_message_handler))
-    application.add_handler(MessageHandler(filters=filters.StatusUpdate.NEW_CHAT_MEMBERS, callback=chat_member_handler))
-    application.add_handler(CommandHandler(command="lp", callback=command_lp_handler))
-    application.add_error_handler(telegram_error_handler)
-    application.run_polling()
+    # APPLICATION.run_polling()
+
+    # https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/setWebhook?url={WEBHOOK_URL}
+    # https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/getWebhookInfo
+    APPLICATION.run_webhook(
+        listen="0.0.0.0",
+        port=WEBHOOK_PORT,
+        secret_token=uuid4().hex,
+        webhook_url=WEBHOOK_URL,
+    )
 
 
 if __name__ == "__main__":
