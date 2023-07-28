@@ -11,7 +11,6 @@ from telegram.constants import ParseMode
 
 LOG_LEVEL = os.getenv("LOG_LEVEL", default="INFO")
 TIMEZONE_TAIWAN = pytz.timezone("Asia/Taipei")
-MINIMUM_EARNING_RATE_REQUIREMENT = 5.0
 SHORT_MONEY_LOCK_DAYS = 50
 
 CACHE = TTLCache(maxsize=100, ttl=21600)  # 21600 = 6 hours
@@ -105,7 +104,7 @@ async def list_category_ids(session):
             return []
 
 
-async def list_category_gift_ids(session, category_id, page=1, results=[]):
+async def list_category_gift_ids(session, category_id, target_rate, page=1, results=[]):
     url = f"https://giftshop-tw.line.me/api/category/v2/{category_id}/products/more?sortType=PRICE_DESC&periodTypes=FIXED&periodTypes=FLEXIBLE&voucherTypes=ONE_TIME&payType=NORMAL&page={page}"
 
     async with session.get(url) as response:
@@ -114,12 +113,12 @@ async def list_category_gift_ids(session, category_id, page=1, results=[]):
             content = data["result"]["content"]
             for gift in content:
                 if gift["pointEarningPolicy"] is not None:
-                    if gift["pointEarningPolicy"]["earningRate"] >= MINIMUM_EARNING_RATE_REQUIREMENT:
+                    if gift["pointEarningPolicy"]["earningRate"] >= target_rate:
                         results.append(gift["id"])
 
             if not data["result"]["last"]:
-                await asyncio.sleep(0.01)
-                results = await list_category_gift_ids(session, category_id, page + 1, results)
+                await asyncio.sleep(0.1)
+                results = await list_category_gift_ids(session, category_id, target_rate, page + 1, results)
 
         return results
 
@@ -162,7 +161,7 @@ async def crawl_line_gifts(target_rate: float, bot, reply_msg):
                 category_index += 1
                 while retry_count < 3:
                     try:
-                        category_gift_ids = await list_category_gift_ids(session, category_id)
+                        category_gift_ids = await list_category_gift_ids(session, category_id, target_rate)
                         tmp_msg = f"{category_index}. category {category_id} 取得 {len(category_gift_ids)} 個 gift"
                         logger.info(tmp_msg)
                         msg = f"{msg}\n{tmp_msg}"
