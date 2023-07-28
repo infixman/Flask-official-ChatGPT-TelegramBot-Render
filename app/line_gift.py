@@ -11,7 +11,7 @@ TIMEZONE_TAIWAN = pytz.timezone("Asia/Taipei")
 MINIMUM_EARNING_RATE_REQUIREMENT = 5.0
 SHORT_MONEY_LOCK_DAYS = 50
 
-CACHE = TTLCache(maxsize=20, ttl=1800)
+CACHE = TTLCache(maxsize=100, ttl=21600)  # 21600 = 6 hours
 
 
 class Gift:
@@ -147,8 +147,8 @@ async def crawl_line_gifts(target_rate: float, bot, reply_msg) -> str:
             await bot.edit_message_text(
                 chat_id=reply_msg.chat_id, message_id=reply_msg.message_id, text=msg, parse_mode=ParseMode.MARKDOWN
             )
-            category_index = 0
 
+            category_index = 0
             for category_id in category_ids:
                 retry_count = 0
                 category_index += 1
