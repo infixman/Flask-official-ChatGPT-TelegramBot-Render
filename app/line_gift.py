@@ -4,10 +4,13 @@ from typing import Optional
 
 import aiohttp
 import pytz
+from cachetools import TTLCache
 
 TIMEZONE_TAIWAN = pytz.timezone("Asia/Taipei")
 MINIMUM_EARNING_RATE_REQUIREMENT = 5.0
 SHORT_MONEY_LOCK_DAYS = 30
+
+CACHE = TTLCache(maxsize=20, ttl=1800)
 
 
 class Gift:
@@ -131,7 +134,15 @@ async def fetch_gift(session, gift_id):
     return None
 
 
-async def crawl_line_gifts(target_rate: int):
+async def crawl_line_gifts(target_rate: int) -> str:
+    if target_rate in CACHE:
+        return CACHE[target_rate]
+
+    utc_now = datetime.utcnow()
+    time_format = "%Y-%m-%d %H:%M:%S"
+    utc_plus_8_now = utc_now.replace(tzinfo=pytz.utc).astimezone(TIMEZONE_TAIWAN).strftime(time_format)
+    tmp = [f"快取時間: {utc_plus_8_now}"]
+
     async with aiohttp.ClientSession() as session:
         category_ids = await list_category_ids(session)
         print(f"取得 {len(category_ids)} 個 category")
@@ -173,3 +184,9 @@ async def crawl_line_gifts(target_rate: int):
                         f"{gift.name}\n"
                         f"https://giftshop-tw.line.me/voucher/{gift.id}"
                     )
+
+                    tmp.append(gift_description)
+
+    result = "\n---\n".join(tmp)
+    CACHE[target_rate] = result
+    return result

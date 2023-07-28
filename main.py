@@ -58,7 +58,9 @@ async def command_lp_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
     reply_msg: Message = await update.message.reply_text("loading ...")
     if len(paras) == 2:
         msg = await line_gift.crawl_line_gifts(int(paras[1]))
-        await context.bot.edit_message_text(chat_id=reply_msg.chat_id, message_id=reply_msg.message_id, text=msg)
+        await context.bot.edit_message_text(
+            chat_id=reply_msg.chat_id, message_id=reply_msg.message_id, text=msg, parse_mode=ParseMode.MARKDOWN
+        )
 
 
 async def telegram_error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
