@@ -206,4 +206,7 @@ async def crawl_line_gifts(target_rate: float, bot, reply_msg) -> str:
             result_text = f"快取時間: {utc_plus_8_now}\n---\n查無結果"
 
         CACHE[target_rate] = result_text
-        return result_text
+        
+        await bot.edit_message_text(
+            chat_id=reply_msg.chat_id, message_id=reply_msg.message_id, text=result_text, parse_mode=ParseMode.MARKDOWN
+        )

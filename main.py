@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 
@@ -59,10 +60,7 @@ async def command_lp_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
     if len(paras) == 2:
         target_rate = float(paras[1])
         if target_rate >= 1:
-            msg = await line_gift.crawl_line_gifts(target_rate, context.bot, reply_msg)
-            await context.bot.edit_message_text(
-                chat_id=reply_msg.chat_id, message_id=reply_msg.message_id, text=msg, parse_mode=ParseMode.MARKDOWN
-            )
+            asyncio.create_task(line_gift.crawl_line_gifts(target_rate, context.bot, reply_msg))
 
 
 async def telegram_error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
