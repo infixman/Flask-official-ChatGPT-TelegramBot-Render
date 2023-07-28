@@ -1,11 +1,11 @@
 import logging
 import os
 
-from telegram import Update
-from telegram.ext import Application, ContextTypes, MessageHandler, filters
-from telegram import ChatPermissions
+from telegram import ChatPermissions, Update
+from telegram.constants import ParseMode
+from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
 
-import app.chatbot as chatbot
+from app import chatbot, line_gift
 
 LOG_LEVEL = os.getenv("LOG_LEVEL", default="INFO")
 
@@ -53,6 +53,13 @@ async def chat_member_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
             )
 
 
+async def command_lp_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    paras = update.message.text.upper().split(" ")
+    if len(paras) == 2:
+        msg = await line_gift.crawl_line_gifts(int(paras[1]))
+        await update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN)
+
+
 async def telegram_error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logger.warning('Update "%s" caused error "%s"', update, context.error)
 
@@ -63,6 +70,7 @@ def main():
 
     application.add_handler(MessageHandler(filters=filters.TEXT & ~filters.COMMAND, callback=text_message_handler))
     application.add_handler(MessageHandler(filters=filters.StatusUpdate.NEW_CHAT_MEMBERS, callback=chat_member_handler))
+    application.add_handler(CommandHandler(command="lp", callback=command_lp_handler))
     application.add_error_handler(telegram_error_handler)
     application.run_polling()
 
