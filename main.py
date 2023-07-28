@@ -40,11 +40,18 @@ async def chat_member_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
         chat_id = str(chat.id)
         chat_name = str(chat.full_name)
 
-        if (
-            "网" in user_full_name
+        """
+        黑客攻击技术暗网公益项目有电脑在家就能学
+        免费教黑客技术攻击暗网赚钱月入百万不是梦
+        有电脑就能学的暗网公益项目月百万免费教学
+        免费学习攻击非法网站赌博网站教你月入百万
+        """
+
+        if ("黑" in user_full_name and "攻击" in user_full_name and "暗" in user_full_name) or (
+            ("黑" in user_full_name or "暗" in user_full_name or "赌" in user_full_name)
+            and "网" in user_full_name
             and "月" in user_full_name
             and "万" in user_full_name
-            and ("暗" in user_full_name or "黑" in user_full_name)
         ):
             await context.bot.restrict_chat_member(chat.id, user.id, permissions=ChatPermissions())
             await context.bot.ban_chat_member(chat_id=chat.id, user_id=user.id)
