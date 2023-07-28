@@ -9,7 +9,7 @@ from telegram.constants import ParseMode
 
 TIMEZONE_TAIWAN = pytz.timezone("Asia/Taipei")
 MINIMUM_EARNING_RATE_REQUIREMENT = 5.0
-SHORT_MONEY_LOCK_DAYS = 30
+SHORT_MONEY_LOCK_DAYS = 50
 
 CACHE = TTLCache(maxsize=20, ttl=1800)
 
@@ -139,7 +139,7 @@ async def crawl_line_gifts(target_rate: float, bot, reply_msg) -> str:
     if target_rate in CACHE:
         return CACHE[target_rate]
     else:
-        tmp_result = []
+        tmp_result = {}
         async with aiohttp.ClientSession() as session:
             category_ids = await list_category_ids(session)
             msg = f"取得 {len(category_ids)} 個 category"
@@ -193,17 +193,17 @@ async def crawl_line_gifts(target_rate: float, bot, reply_msg) -> str:
                             f"https://giftshop-tw.line.me/voucher/{gift.id}"
                         )
 
-                        tmp_result.append(gift_description)
+                        tmp_result[gift.id] = gift_description
 
         utc_now = datetime.utcnow()
         time_format = "%Y-%m-%d %H:%M:%S"
         utc_plus_8_now = utc_now.replace(tzinfo=pytz.utc).astimezone(TIMEZONE_TAIWAN).strftime(time_format)
-
+        result_text = f"快取時間: {utc_plus_8_now}"
         if tmp_result:
-            tmp_result.insert(0, f"快取時間: {utc_plus_8_now}")
+            for value in tmp_result.values():
+                result_text = f"{result_text}\n---\n{value}"
         else:
-            tmp_result = [f"快取時間: {utc_plus_8_now}", "查無結果"]
+            result_text = f"快取時間: {utc_plus_8_now}\n---\n查無結果"
 
-        result = "\n---\n".join(tmp_result)
-        CACHE[target_rate] = result
-        return result
+        CACHE[target_rate] = result_text
+        return result_text
