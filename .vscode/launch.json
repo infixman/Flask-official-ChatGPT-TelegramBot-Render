@@ -5,15 +5,12 @@
             "name": "moneyBrokerr_bot",
             "type": "python",
             "request": "launch",
-            "module": "python3",
-            "args": [
-                "main.py"
-            ],
+            "module": "main",
             "env": {
                 "LOG_LEVEL": "DEBUG",
                 "TELEGRAM_BOT_TOKEN": "12345xxx:xxx",
-                "OPENAI_API_KEY": "xxxx",
-                "OPENAI_MAX_TOKENS": "250"
+                "WEBHOOK_URL": "https://0b97-114-41-102-157.ngrok-free.app",
+                "WEBHOOK_PORT": "8083"
             },
             "justMyCode": false,
         }
